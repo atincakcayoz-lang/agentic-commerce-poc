@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Agentic Commerce PoC</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    button { padding: 10px 20px; margin-right: 10px; font-size: 16px; cursor: pointer; }
+    .reply { margin-top: 20px; background: #f6f6f6; padding: 20px; border-radius: 8px; }
+    img { width: 150px; margin-right: 10px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <h1>🛍️ Agentic Commerce PoC</h1>
+  <p>Bu demo <b>Agent</b> ve <b>Market (ACP)</b> servislerini birbirine bağlar.</p>
+
+  <button id="add">🧀 Süt Ürünleri Ekle</button>
+  <button id="pay">💳 Öde</button>
+
+  <div class="reply" id="reply">Henüz işlem yapılmadı.</div>
+
+  <script>
+    const replyDiv = document.getElementById("reply");
+
+    async function sendMessage(msg) {
+      replyDiv.innerHTML = "İşleniyor...";
+      const res = await fetch("http://localhost:4000/agent/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      console.log(data);
+      renderReply(data);
+    }
+
+    function renderReply(data) {
+      if (data.error) {
+        replyDiv.innerHTML = `<b>Hata:</b> ${data.error}`;
+        return;
+      }
+      let html = `<p>${data.reply}</p>`;
+      if (data.merchant) {
+        html += `<p><b>Market:</b> ${data.merchant.name}</p>`;
+      }
+      if (data.products) {
+        html += "<p><b>Ürünler:</b></p>";
+        data.products.forEach(p => {
+          html += `<div><img src="${p.image_url || 'https://via.placeholder.com/100'}"> ${p.title} – ${p.price} ₺</div>`;
+        });
+      }
+      replyDiv.innerHTML = html;
+    }
+
+    document.getElementById("add").onclick = () => sendMessage("süt ürünleri ekle");
+    document.getElementById("pay").onclick = () => sendMessage("öde");
+  </script>
+</body>
+</html>
+

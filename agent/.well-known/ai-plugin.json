@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Agentic Commerce PoC",
+  "name_for_model": "agentic_commerce_poc",
+  "description_for_human": "Sohbetten ürün arayan ve ACP markete bağlanan PoC ajan.",
+  "description_for_model": "When the user wants to browse or buy grocery/dairy items, send the user's message to POST /agent/message.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "REPLACE_ME_WITH_RENDER_URL/openapi.yaml",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://via.placeholder.com/128?text=ACP",
+  "contact_email": "support@example.com",
+  "legal_info_url": "https://example.com/legal"
+}
+

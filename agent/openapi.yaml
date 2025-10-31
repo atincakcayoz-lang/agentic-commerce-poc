@@ -1,0 +1,41 @@
+openapi: 3.0.1
+info:
+  title: Agentic Commerce PoC
+  description: "Agent tarafı, kullanıcının isteklerini alır ve ACP Market servisiyle işlem yapar."
+  version: "1.0.0"
+servers:
+  - url: https://<NGROK_URL>
+paths:
+  /agent/message:
+    post:
+      summary: Send message to Agent
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: "Kullanıcının isteği (ör: 'süt ürünleri ekle', 'öde')"
+      responses:
+        "200":
+          description: Agent cevabı
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                  products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        price:
+                          type: number

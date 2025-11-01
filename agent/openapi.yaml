@@ -2,23 +2,15 @@ openapi: 3.0.1
 info:
   title: Agentic Commerce PoC Agent
   version: 1.0.0
-  description: >
-    Natural-language commerce agent for testing the Agentic Commerce Protocol PoC.
-    It handles product search, cart creation, add-to-cart, and checkout for demo merchants.
+  description: "Turkish agentic commerce PoC API for ChatGPT plugin."
 servers:
-  - url: https://agentic-commerce-poc-1.onrender.com
+  - url: https://agentic-commerce-poc-1.onrender.com/
+    description: "Primary hosted server"
 paths:
   /agent/message:
     post:
-      summary: Send a commerce message to the agent
-      description: >
-        Forward the user's original text here. The agent will:
-        1) list merchants,
-        2) pick the most profitable one,
-        3) query products,
-        4) create a cart if needed,
-        5) add up to 2 cheapest relevant products,
-        6) or if the text is 'öde' / 'satın al' / 'tamamla', it will checkout.
+      summary: "Send a commerce message"
+      description: "Send the user's Turkish message. The agent will add products or checkout."
       requestBody:
         required: true
         content:
@@ -30,10 +22,10 @@ paths:
               properties:
                 message:
                   type: string
-                  example: "süt ürünleri ekle"
+                  example: "sut urunleri ekle"
       responses:
         "200":
-          description: Agent's reply
+          description: "Agent reply"
           content:
             application/json:
               schema:
@@ -41,54 +33,34 @@ paths:
                 properties:
                   reply:
                     type: string
-                    example: "Karlı Market içinden 2 ürünü sepete ekledim. “öde” dersen siparişi tamamlarım."
+                    example: "Karlı Market icinden 2 urun sepete eklendi. 'ode' dersen tamamlarim."
                   cart_id:
                     type: string
-                    example: "f0619e7f-8aab-4ca2-a2c8-dc17982639ab"
-                  merchant:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        example: "mkt-1"
-                      name:
-                        type: string
-                        example: "Karlı Market"
-                  products:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          example: "P-001"
-                        title:
-                          type: string
-                          example: "Pınar Süt 1L"
-                        price:
-                          type: number
-                          example: 39.9
-                        profit:
-                          type: number
-                          example: 9.9
+                    example: "ddb1375d-fe92-4aea-b673-e45e9cbf9db7"
+                  order_id:
+                    type: string
+                    example: "e079f985-adce-44a7-9a81-fdad1f396e8a"
   /agent/order/{id}:
     get:
-      summary: Get order details
-      description: Retrieve a previously created order.
+      summary: "Get order details"
+      description: "Return an order created earlier."
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-          description: Order ID returned from checkout
       responses:
         "200":
-          description: Order details
+          description: "Order detail"
           content:
             application/json:
               schema:
                 type: object
         "404":
-          description: Order not found
-components: {}
+          description: "Order not found"
+components:
+  servers:
+    default:
+      url: https://agentic-commerce-poc-1.onrender.com/
+      description: "Fallback server for ChatGPT importer"

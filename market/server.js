@@ -1,10 +1,26 @@
 import express from "express";
 import cors from "cors";
 import { v4 as uuid } from "uuid";
+import axios from "axios";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Agent servisinin dış URL'i (Render'daki ikinci servis)
+const AGENT_BASE =
+  process.env.AGENT_BASE || "https://agentic-commerce-poc-1.onrender.com";
+
+// 🔹 0) KÖK ENDPOINT
+// ChatGPT importer ilk buraya geliyor. 200 dönmesi şart.
+app.get("/", (req, res) => {
+  res.status(200).json({
+    name: "Agentic Commerce PoC - Market",
+    status: "ok",
+    docs: "/acp/merchants, /acp/products, /agent/message",
+    time: new Date().toISOString()
+  });
+});
 
 // 1) Merchant listesi (mock)
 const MERCHANTS = [
@@ -234,6 +250,34 @@ app.get("/acp/orders/:id", (req, res) => {
 });
 
 /**
+ * 🔹 PROXY: /agent/message
+ * ChatGPT'nin çağıracağı endpoint tek domainden olsun diye
+ */
+app.post("/agent/message", async (req, res) => {
+  try {
+    const r = await axios.post(`${AGENT_BASE}/agent/message`, req.body, {
+      headers: { "Content-Type": "application/json" }
+    });
+    res.status(r.status).json(r.data);
+  } catch (err) {
+    console.error("agent proxy error:", err.message);
+    res.status(500).json({ error: "agent proxy failed", detail: err.message });
+  }
+});
+
+/**
+ * 🔹 PROXY: /agent/order/:id
+ */
+app.get("/agent/order/:id", async (req, res) => {
+  try {
+    const r = await axios.get(`${AGENT_BASE}/agent/order/${req.params.id}`);
+    res.status(r.status).json(r.data);
+  } catch (err) {
+    res.status(500).json({ error: "agent order proxy failed" });
+  }
+});
+
+/**
  * GET /health
  */
 app.get("/health", (req, res) => {
@@ -242,5 +286,7 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Market (ACP mock, multi-merchant) running on http://0.0.0.0:${PORT}`);
+  console.log(
+    `Market (ACP mock, multi-merchant) running on http://0.0.0.0:${PORT}`
+  );
 });

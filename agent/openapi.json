@@ -1,0 +1,161 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agentic Commerce PoC API",
+    "version": "1.0.0",
+    "description": "Bu API, ChatGPT içinden agentic commerce senaryosunu simüle eder: kullanıcı Türkçe yazar, API de markete gidip ürün ekler veya ödeme yapar."
+  },
+  "servers": [
+    {
+      "url": "https://agentic-commerce-poc.onrender.com",
+      "description": "Public Render market/agent gateway"
+    }
+  ],
+  "paths": {
+    "/agent/message": {
+      "post": {
+        "operationId": "sendAgentMessage",
+        "summary": "Ajan mesajı gönder",
+        "description": "Kullanıcının doğal dilde (Türkçe) yazdığı mesajı alır. Eğer mesaj 'öde', 'satın al', 'tamamla' ise checkout yapar. Diğer durumlarda en kârlı marketten ilgili ürünleri sepete ekler.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Kullanıcının Türkçe isteği",
+                    "example": "süt ürünleri ekle"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ajanın cevabı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reply": {
+                      "type": "string",
+                      "example": "Karlı Market içinden 2 ürünü sepete ekledim. “öde” dersen siparişi tamamlarım."
+                    },
+                    "cart_id": {
+                      "type": "string",
+                      "example": "ddb1375d-fe92-4aea-b673-e45e9cbf9db7"
+                    },
+                    "merchant": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "example": "mkt-1" },
+                        "name": { "type": "string", "example": "Karlı Market" }
+                      }
+                    },
+                    "products": {
+                      "type": "array",
+                      "description": "Sepete eklenen ürünler",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "example": "P-001" },
+                          "title": { "type": "string", "example": "Pınar Süt 1L" },
+                          "price": { "type": "number", "example": 39.9 },
+                          "profit": { "type": "number", "example": 9.9 },
+                          "image_url": { "type": "string", "example": "https://via.placeholder.com/300x200?text=Pinar+Sut" }
+                        }
+                      }
+                    },
+                    "order_id": {
+                      "type": "string",
+                      "description": "Eğer mesaj ödeme ise döner",
+                      "example": "e079f985-adce-44a7-9a81-fdad1f396e8a"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Hatalı istek"
+          },
+          "500": {
+            "description": "Sunucu hatası"
+          }
+        }
+      }
+    },
+    "/agent/order/{orderId}": {
+      "get": {
+        "operationId": "getAgentOrder",
+        "summary": "Sipariş detayı",
+        "description": "Daha önce checkout ile oluşturulmuş siparişin ayrıntılarını getirir.",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Checkout sonucunda dönen sipariş numarası"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sipariş detayı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "e079f985-adce-44a7-9a81-fdad1f396e8a" },
+                    "cart_id": { "type": "string", "example": "ddb1375d-fe92-4aea-b673-e45e9cbf9db7" },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "product_id": { "type": "string", "example": "P-001" },
+                          "quantity": { "type": "integer", "example": 1 },
+                          "unit_price": { "type": "number", "example": 39.9 },
+                          "unit_cost": { "type": "number", "example": 30 },
+                          "unit_profit": { "type": "number", "example": 9.9 },
+                          "merchant_id": { "type": "string", "example": "mkt-1" }
+                        }
+                      }
+                    },
+                    "total": { "type": "number", "example": 101.9 },
+                    "total_cost": { "type": "number", "example": 75 },
+                    "total_profit": { "type": "number", "example": 26.9 },
+                    "currency": { "type": "string", "example": "TRY" },
+                    "buyer": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string", "example": "Atınç Akçayöz" }
+                      }
+                    },
+                    "payment_status": { "type": "string", "example": "paid" },
+                    "fulfilment_status": { "type": "string", "example": "processing" },
+                    "created_at": { "type": "string", "format": "date-time", "example": "2025-11-01T06:15:26.697Z" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sipariş bulunamadı"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}
+

@@ -12,23 +12,20 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ===================================================================
+// -------------------------------------------------------------
 // CONFIG
-// ===================================================================
-// Lokal geliştirirken env vermezsen localhost'u kullanır.
-// Render'da ise ortam değişkeni olarak MARKET_BASE'i vereceğiz.
+// -------------------------------------------------------------
+// Market Render'da:
 const MARKET_BASE =
   process.env.MARKET_BASE || "https://agentic-commerce-poc.onrender.com";
 
-// PoC: tek kullanıcı sepet durumu (memory)
+// PoC için hafızada tek sepet
 let CURRENT_CART = null;
 
-// ===================================================================
-// STATIC: .well-known (ai-plugin.json) SERVE
-// ===================================================================
+// .well-known içeriğini serve et (ai-plugin.json)
 app.use("/.well-known", express.static(path.join(__dirname, ".well-known")));
 
-// OpenAPI dosyasını da buradan verelim
+// OpenAPI dosyasını serve et
 app.get("/openapi.yaml", (req, res) => {
   const filePath = path.join(__dirname, "openapi.yaml");
   try {
@@ -40,12 +37,12 @@ app.get("/openapi.yaml", (req, res) => {
   }
 });
 
-// Basit health
+// Health
 app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "agent", market_base: MARKET_BASE });
 });
 
-// GET ile girince info dönsün (tarayıcıdan test için)
+// GET ile girince info dönsün
 app.get("/agent/message", (req, res) => {
   res.json({
     info: "Bu endpoint POST ile kullanılmalı.",
@@ -57,9 +54,17 @@ app.get("/agent/message", (req, res) => {
   });
 });
 
-// ===================================================================
-// YARDIMCI FONKSİYONLAR
-// ===================================================================
+// Siparişi marketten okuyan endpoint (ChatGPT sonradan çağırabilsin diye)
+app.get("/agent/order/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const orderResp = await axios.get(`${MARKET_BASE}/acp/orders/${id}`);
+    res.json(orderResp.data);
+  } catch (e) {
+    res.status(404).json({ error: "Order not found" });
+  }
+});
+
 function detectIntent(text) {
   const t = text.toLowerCase();
   if (t.includes("öde") || t.includes("satın al") || t.includes("tamamla")) {
@@ -72,13 +77,12 @@ function extractQuery(text) {
   const t = text.toLowerCase();
   if (t.includes("peynir")) return "peynir";
   if (t.includes("tereyağı") || t.includes("tereyagi")) return "tereyağı";
-  // default kategori
   return "sut";
 }
 
-// ===================================================================
+// -------------------------------------------------------------
 // ANA ENDPOINT
-// ===================================================================
+// -------------------------------------------------------------
 app.post("/agent/message", async (req, res) => {
   const { message } = req.body;
   if (!message) {
@@ -88,9 +92,7 @@ app.post("/agent/message", async (req, res) => {
   const intent = detectIntent(message);
 
   try {
-    // ---------------------------------------------------------------
-    // 1) CHECKOUT AKIŞI
-    // ---------------------------------------------------------------
+    // 1) CHECKOUT
     if (intent === "checkout") {
       if (!CURRENT_CART) {
         return res.json({
@@ -105,19 +107,17 @@ app.post("/agent/message", async (req, res) => {
       });
 
       const d = checkoutResp.data;
-      // sepeti sıfırla
+      const orderId = d.order_id;
       CURRENT_CART = null;
 
       return res.json({
-        reply: `Ödeme alındı ✅ Toplam: ${d.total} ${d.currency}. Market kârı: ${d.total_profit} ${d.currency}. Sipariş no: ${d.order_id}`
+        reply: `Ödeme alındı ✅ Toplam: ${d.total} ${d.currency}. Market kârı: ${d.total_profit} ${d.currency}. Sipariş no: ${d.order_id}`,
+        order_id: orderId
       });
     }
 
-    // ---------------------------------------------------------------
-    // 2) ÜRÜN ARAMA + SEPETE EKLEME AKIŞI
-    // ---------------------------------------------------------------
-
-    // 2.a: bağlı merchant'ları al
+    // 2) ÜRÜN ARAMA + SEPETE EKLEME
+    // 2.a merchant'ları al
     const merchantsResp = await axios.get(`${MARKET_BASE}/acp/merchants`);
     const merchants = merchantsResp.data.items || [];
 
@@ -127,15 +127,15 @@ app.post("/agent/message", async (req, res) => {
       });
     }
 
-    // 2.b: en kârlı marketi seç (profit_weight'e göre)
+    // 2.b en kârlı marketi seç
     const chosenMerchant = merchants
       .slice()
       .sort((a, b) => (b.profit_weight || 0) - (a.profit_weight || 0))[0];
 
-    // 2.c: kullanıcı cümlesinden arama sorgusunu çıkar
+    // 2.c sorgu çıkar
     const q = extractQuery(message);
 
-    // 2.d: seçilen marketin ürünlerini al
+    // 2.d o marketten ürünleri al
     const productsResp = await axios.get(`${MARKET_BASE}/acp/products`, {
       params: {
         q,
@@ -152,13 +152,13 @@ app.post("/agent/message", async (req, res) => {
       });
     }
 
-    // 2.e: sepet yoksa oluştur
+    // 2.e sepet yoksa oluştur
     if (!CURRENT_CART) {
       const cartResp = await axios.post(`${MARKET_BASE}/acp/cart`);
       CURRENT_CART = cartResp.data.id;
     }
 
-    // 2.f: en ucuz 2 ürünü ekle (seçilen marketten)
+    // 2.f en ucuz 2 ürünü ekle
     const sorted = products
       .map((p) => ({
         ...p,
@@ -184,6 +184,15 @@ app.post("/agent/message", async (req, res) => {
         id: chosenMerchant.id,
         name: chosenMerchant.name
       },
+      cart_summary: {
+        currency: "TRY",
+        items: sorted.map((p) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          profit: p.profit
+        }))
+      },
       products: sorted.map((p) => ({
         id: p.id,
         title: p.title,
@@ -201,9 +210,6 @@ app.post("/agent/message", async (req, res) => {
   }
 });
 
-// ===================================================================
-// SERVER START
-// ===================================================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Agent (multi-merchant) running on http://0.0.0.0:${PORT}`);

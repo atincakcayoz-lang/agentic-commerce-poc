@@ -3,22 +3,24 @@ info:
   title: Agentic Commerce PoC Agent
   version: 1.0.0
   description: >
-    This API receives a natural-language commerce message and orchestrates ACP-style
-    operations against the merchant service at https://agentic-commerce-poc.onrender.com.
+    Natural-language commerce agent. It talks to the ACP-style merchant service at
+    https://agentic-commerce-poc.onrender.com and handles product search, cart creation,
+    add-to-cart and checkout.
 servers:
   - url: https://agentic-commerce-poc-1.onrender.com
 paths:
   /agent/message:
     post:
       summary: Send a commerce message to the agent
+      operationId: sendCommerceMessage
       description: |
         Forward the user's original text here. The agent will:
-        - fetch merchant list
-        - pick the most profitable merchant
-        - search products
-        - create a cart if missing
-        - add up to 2 cheapest relevant products
-        - or, if the user said "öde / buy / checkout", it will checkout.
+        1) list merchants,
+        2) pick the most profitable merchant (by profit_weight),
+        3) query products for that merchant,
+        4) create a cart if needed,
+        5) add up to 2 cheapest relevant products,
+        6) or if the text is 'öde' / 'satın al' / 'tamamla', it will checkout.
       requestBody:
         required: true
         content:
@@ -30,11 +32,10 @@ paths:
               properties:
                 message:
                   type: string
-                  description: User's natural language request
                   example: "süt ürünleri ekle"
       responses:
         "200":
-          description: Agent reply
+          description: Agent's reply
           content:
             application/json:
               schema:
@@ -72,8 +73,24 @@ paths:
                         profit:
                           type: number
                           example: 9.9
-        "400":
-          description: Bad request
-        "500":
-          description: Server error
+  /agent/order/{id}:
+    get:
+      summary: Get order details
+      description: Fetch a previously created order from the merchant service.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Order ID returned from checkout
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Order not found
 components: {}

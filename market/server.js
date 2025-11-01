@@ -87,7 +87,6 @@ const ORDERS = new Map();
 
 /**
  * GET /acp/merchants
- * Tüm merchant'ları döner
  */
 app.get("/acp/merchants", (req, res) => {
   res.json({
@@ -99,8 +98,8 @@ app.get("/acp/merchants", (req, res) => {
 
 /**
  * GET /acp/products
- * - q: arama (title/category)
- * - merchant_id: belirli merchant'ın ürünleri
+ * ?q=
+ * ?merchant_id=
  */
 app.get("/acp/products", (req, res) => {
   const q = (req.query.q || "").toLowerCase();
@@ -130,7 +129,6 @@ app.get("/acp/products", (req, res) => {
 
 /**
  * POST /acp/cart
- * Yeni sepet oluşturur
  */
 app.post("/acp/cart", (req, res) => {
   const id = uuid();
@@ -145,7 +143,6 @@ app.post("/acp/cart", (req, res) => {
 
 /**
  * POST /acp/cart/:cartId/items
- * Sepete ürün ekler
  */
 app.post("/acp/cart/:cartId/items", (req, res) => {
   const { cartId } = req.params;
@@ -180,7 +177,6 @@ app.post("/acp/cart/:cartId/items", (req, res) => {
 
 /**
  * POST /acp/checkout
- * Ödemeyi mock'lar, sipariş oluşturur
  */
 app.post("/acp/checkout", (req, res) => {
   const { cart_id, buyer } = req.body;
@@ -228,7 +224,6 @@ app.post("/acp/checkout", (req, res) => {
 
 /**
  * GET /acp/orders/:id
- * Siparişi görüntüler
  */
 app.get("/acp/orders/:id", (req, res) => {
   const order = ORDERS.get(req.params.id);
@@ -245,7 +240,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "market" });
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log("Market (ACP mock, multi-merchant) running on http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Market (ACP mock, multi-merchant) running on http://0.0.0.0:${PORT}`);
 });

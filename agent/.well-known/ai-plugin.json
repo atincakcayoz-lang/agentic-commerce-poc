@@ -3,14 +3,17 @@
   "name_for_human": "Agentic Commerce PoC",
   "name_for_model": "agentic_commerce_poc",
   "description_for_human": "Bu eklenti, kullanıcıdan doğal dilde ürün isteklerini alır ve ACP Market servisiyle etkileşime geçer.",
-  "description_for_model": "When the user wants to browse or buy grocery products (like milk, cheese, butter), send their natural-language message to POST /agent/message.",
-  "auth": { "type": "none" },
+  "description_for_model": "Forward the user's Turkish message directly to POST /agent/message. Use GET /agent/order/{id} to show order details.",
+  "auth": {
+    "type": "none"
+  },
   "api": {
     "type": "openapi",
-    "url": "https://agentic-commerce-poc-1.onrender.com/openapi.yaml",
+    "url": "https://raw.githubusercontent.com/atincakcayoz-lang/agentic-commerce-poc/main/agent/openapi.yaml",
     "is_user_authenticated": false
   },
   "logo_url": "https://via.placeholder.com/128?text=ACP",
   "contact_email": "support@example.com",
   "legal_info_url": "https://example.com/legal"
 }
+

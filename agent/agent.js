@@ -15,11 +15,10 @@ app.use(cors());
 // ===================================================================
 // CONFIG
 // ===================================================================
-
-// Lokal geliştirirken:
-// const MARKET_BASE = "http://localhost:3000";
-// Render'a da market'i deploy ettiysen ENV'den al:
-const MARKET_BASE = process.env.MARKET_BASE || "http://localhost:3000";
+// Lokal geliştirirken env vermezsen localhost'u kullanır.
+// Render'da ise ortam değişkeni olarak MARKET_BASE'i vereceğiz.
+const MARKET_BASE =
+  process.env.MARKET_BASE || "https://agentic-commerce-poc.onrender.com";
 
 // PoC: tek kullanıcı sepet durumu (memory)
 let CURRENT_CART = null;
@@ -99,7 +98,6 @@ app.post("/agent/message", async (req, res) => {
         });
       }
 
-      // market'te checkout
       const checkoutResp = await axios.post(`${MARKET_BASE}/acp/checkout`, {
         cart_id: CURRENT_CART,
         buyer: { name: "Atınç Akçayöz" },
@@ -196,7 +194,6 @@ app.post("/agent/message", async (req, res) => {
     });
   } catch (err) {
     console.error("Agent error:", err.message);
-    // render'da daha anlamlı hata görmek için
     return res.status(500).json({
       error: err.message,
       hint: "MARKET_BASE doğru mu? Market servisi erişilebilir mi?"

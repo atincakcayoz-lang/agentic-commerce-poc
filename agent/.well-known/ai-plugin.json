@@ -2,14 +2,14 @@
   "schema_version": "v1",
   "name_for_human": "Agentic Commerce PoC",
   "name_for_model": "agentic_commerce_poc",
-  "description_for_human": "Sohbetten ürün arayan ve ACP markete bağlanan PoC ajan.",
-  "description_for_model": "When the user wants to browse or buy grocery/dairy items, send the user's message to POST /agent/message.",
+  "description_for_human": "Sohbetten süt, kahvaltılık, peynir, tereyağı gibi ürünleri bulup sepete ekleyen ve ödemeyi bitiren PoC ajan.",
+  "description_for_model": "Use this tool to fulfill natural-language commerce requests. Forward the user message verbatim to POST /agent/message. The backend will: 1) list merchants, 2) pick the most profitable one, 3) search products, 4) create cart, 5) add items, and 6) optionally checkout.",
   "auth": {
     "type": "none"
   },
   "api": {
     "type": "openapi",
-    "url": "REPLACE_ME_WITH_RENDER_URL/openapi.yaml",
+    "url": "https://agentic-commerce-poc-1.onrender.com/openapi.yaml",
     "is_user_authenticated": false
   },
   "logo_url": "https://via.placeholder.com/128?text=ACP",

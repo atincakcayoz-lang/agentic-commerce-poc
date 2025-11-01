@@ -1,28 +1,40 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
-  title: Agentic Commerce PoC
-  description: "Agent tarafı, kullanıcının isteklerini alır ve ACP Market servisiyle işlem yapar."
-  version: "1.0.0"
+  title: Agentic Commerce PoC Agent
+  version: 1.0.0
+  description: >
+    This API receives a natural-language commerce message and orchestrates ACP-style
+    operations against the merchant service at https://agentic-commerce-poc.onrender.com.
 servers:
-  - url: https://<NGROK_URL>
+  - url: https://agentic-commerce-poc-1.onrender.com
 paths:
   /agent/message:
     post:
-      summary: Send message to Agent
-      operationId: sendMessage
+      summary: Send a commerce message to the agent
+      description: |
+        Forward the user's original text here. The agent will:
+        - fetch merchant list
+        - pick the most profitable merchant
+        - search products
+        - create a cart if missing
+        - add up to 2 cheapest relevant products
+        - or, if the user said "öde / buy / checkout", it will checkout.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - message
               properties:
                 message:
                   type: string
-                  description: "Kullanıcının isteği (ör: 'süt ürünleri ekle', 'öde')"
+                  description: User's natural language request
+                  example: "süt ürünleri ekle"
       responses:
         "200":
-          description: Agent cevabı
+          description: Agent reply
           content:
             application/json:
               schema:
@@ -30,12 +42,38 @@ paths:
                 properties:
                   reply:
                     type: string
+                    example: "Karlı Market içinden 2 ürünü sepete ekledim. “öde” dersen siparişi tamamlarım."
+                  cart_id:
+                    type: string
+                    example: "f0619e7f-8aab-4ca2-a2c8-dc17982639ab"
+                  merchant:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "mkt-1"
+                      name:
+                        type: string
+                        example: "Karlı Market"
                   products:
                     type: array
                     items:
                       type: object
                       properties:
+                        id:
+                          type: string
+                          example: "P-001"
                         title:
                           type: string
+                          example: "Pınar Süt 1L"
                         price:
                           type: number
+                          example: 39.9
+                        profit:
+                          type: number
+                          example: 9.9
+        "400":
+          description: Bad request
+        "500":
+          description: Server error
+components: {}
